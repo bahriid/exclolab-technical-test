@@ -2,11 +2,14 @@
 
 namespace App\Repositories\User;
 
+use App\Models\User;
 use Exception;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 
 class UserService
 {
@@ -79,9 +82,52 @@ class UserService
         ];
     }
 
-    public function logoutUser()
+    /**
+     * @return true
+     */
+    public function logoutUser(): true
     {
         auth()->user()->tokens()->delete();
+
+        return true;
+    }
+
+    /**
+     * @return User|Authenticatable|null
+     */
+    public function fetchUser(): User|Authenticatable|null
+    {
+        return auth()->user();
+    }
+
+    /**
+     * @param $email
+     * @return true
+     */
+    public function forgotPassword($email): true
+    {
+        Password::sendResetLink(['email' => $email]);
+
+        return true;
+    }
+
+    /**
+     * @param $email
+     * @param $password
+     * @param $token
+     * @return true
+     * @throws Exception
+     */
+    public function changePassword($email, $password, $token): true
+    {
+        $reset_password = Password::reset(['email' => $email, 'password' => $password, 'token' => $token], function ($user, $password) {
+            $user->password = $password;
+            $user->save();
+        });
+
+        if($reset_password == Password::INVALID_TOKEN){
+            throw new Exception('Invalid Token');
+        }
 
         return true;
     }

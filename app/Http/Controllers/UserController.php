@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ChangePasswordRequest;
+use App\Http\Requests\ForgotPasswordRequest;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Repositories\User\UserService;
@@ -75,7 +77,7 @@ class UserController extends Controller
 
             return response()->json([
                 'status' => true,
-                'message' => 'Register Success',
+                'message' => 'Logout Success',
             ]);
         } catch (Throwable $exception) {
             return response()->json([
@@ -88,20 +90,64 @@ class UserController extends Controller
     /**
      * @return JsonResponse
      */
-    public function logout()
+    public function sendLink(ForgotPasswordRequest $request)
     {
         try {
-            $payload = $this->userService->logoutUser();
+            $payload = $this->userService->forgotPassword($request['email']);
 
             return response()->json([
                 'status' => true,
-                'message' => 'Register Success',
+                'message' => 'Reset Password link sent to your email',
             ]);
         } catch (Throwable $exception) {
             return response()->json([
                 'status' => false,
                 'message' => config('app.env') == 'production' ? 'Oops something wrong!' : $exception->getMessage()
             ], 403);
+        }
+    }
+
+    /**
+     * @return JsonResponse
+     */
+    public function index()
+    {
+        try {
+            $payload = $this->userService->fetchUser();
+
+            return response()->json([
+                'data' => $payload,
+                'status' => true,
+                'message' => 'User Fetched',
+            ]);
+        } catch (Throwable $exception) {
+            return response()->json([
+                'status' => false,
+                'message' => config('app.env') == 'production' ? 'Oops something wrong!' : $exception->getMessage()
+            ], 403);
+        }
+    }
+
+    /**
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|\Illuminate\Foundation\Application|\Illuminate\View\View
+     */
+    public function indexForgotPassword()
+    {
+        return view('forgot_password');
+    }
+
+    public function forgotPassword(ChangePasswordRequest $request)
+    {
+        try {
+            $payload = $this->userService->changePassword(
+                $request['email'],
+                $request['password'],
+                $request['token'],
+            );
+
+            return redirect()->back()->with('success', 'Change Password Success');
+        } catch (Throwable $exception) {
+            return  redirect()->back()->with('error', config('app.env') == 'production' ? 'Oops something wrong!' : $exception->getMessage());
         }
     }
 
