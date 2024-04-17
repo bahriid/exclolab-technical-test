@@ -32,7 +32,7 @@ class UserService
             throw new Exception('User not found');
         }
 
-        if (!Hash::check($password,$user['password'])) {
+        if (!Hash::check($password, $user['password'])) {
             throw new Exception('Password is wrong');
         }
 
@@ -43,7 +43,7 @@ class UserService
         }
 
         $expiration = $rememberMe ? config('sanctum.month_expiration') : config('sanctum.expiration');
-        $expirationDate =  now()->addDays($expiration / 24);
+        $expirationDate = now()->addDays($expiration / 24);
 
         // Revoke all tokens
         $user->tokens()->delete();
@@ -58,5 +58,31 @@ class UserService
             'access_token' => $token,
             'user' => $user,
         ];
+    }
+
+    /**
+     * @param $name
+     * @param $email
+     * @param $password
+     * @return Model|Collection|Builder|array
+     */
+    public function registerUser($name, $email, $password): Model|Collection|Builder|array
+    {
+        $user = $this->userRepository->create([
+            'name' => $name,
+            'email' => $email,
+            'password' => Hash::make($password),
+        ]);
+
+        return [
+            'user' => $user,
+        ];
+    }
+
+    public function logoutUser()
+    {
+        auth()->user()->tokens()->delete();
+
+        return true;
     }
 }
