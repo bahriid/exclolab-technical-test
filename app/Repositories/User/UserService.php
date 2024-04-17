@@ -4,6 +4,7 @@ namespace App\Repositories\User;
 
 use App\Models\User;
 use Exception;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -40,7 +41,7 @@ class UserService
         }
 
         if (!$user->email_verified_at) {
-            //TODO:: Send Email Verify
+            event(new Registered($user));
 
             throw new Exception('We have sent you email verification, please verify your email');
         }
@@ -128,6 +129,19 @@ class UserService
         if($reset_password == Password::INVALID_TOKEN){
             throw new Exception('Invalid Token');
         }
+
+        return true;
+    }
+
+    public function verifyEmail($id): true
+    {
+        $user = $this->userRepository->findById($id);
+
+        if(!$user){
+            throw new Exception('User not found!');
+        }
+
+        $updatedUser = $this->userRepository->update($id, ['email_verified_at' => now()]);
 
         return true;
     }

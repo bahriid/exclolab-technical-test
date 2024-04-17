@@ -7,7 +7,9 @@ use App\Http\Requests\ForgotPasswordRequest;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Repositories\User\UserService;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Throwable;
 
 class UserController extends Controller
@@ -136,6 +138,10 @@ class UserController extends Controller
         return view('forgot_password');
     }
 
+    /**
+     * @param ChangePasswordRequest $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function forgotPassword(ChangePasswordRequest $request)
     {
         try {
@@ -146,6 +152,20 @@ class UserController extends Controller
             );
 
             return redirect()->back()->with('success', 'Change Password Success');
+        } catch (Throwable $exception) {
+            return  redirect()->back()->with('error', config('app.env') == 'production' ? 'Oops something wrong!' : $exception->getMessage());
+        }
+    }
+
+    public function verifyEmail(Request $request)
+    {
+        try {
+
+            $payload = $this->userService->verifyEmail(
+                $request['id']
+            );
+
+            return redirect()->route('verification.notice')->with('success', 'Email verified Success');
         } catch (Throwable $exception) {
             return  redirect()->back()->with('error', config('app.env') == 'production' ? 'Oops something wrong!' : $exception->getMessage());
         }

@@ -49,4 +49,13 @@ class UserRepository
         return User::query()->create($attributes);
     }
 
+    /**
+     * @param $attributes
+     * @return bool|int
+     */
+    public function update($id, $attributes)
+    {
+        return User::query()->find($id)->update($attributes);
+    }
+
 }
